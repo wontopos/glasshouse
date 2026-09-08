@@ -13,13 +13,28 @@ people's AI. There should be a standard.
 
 ## Rules
 
-1. **Publish the reader, the judge, and the prompts.** A score without them is not a
-   result, because nobody can get it again.
-2. **Publish the per-question record.** Anyone can recompute the number from it. The
+1. **Publish the per-question record.** Anyone can recompute the number from it. The
    aggregate is a claim; the record is the evidence.
-3. **A company's proposal is added when three other companies agree.**
-4. **An individual's proposal is added on public support.** The number is not
-   settled.
+2. **A company's proposal is added when three other companies agree.**
+3. **An individual's proposal is added on public support.** There is no number, on
+   purpose. A count passes anything with one viral post behind it and turns away a
+   quiet correction that happens to be right.
+4. **The reader, the judge and the prompts are set by the version.** Each version of
+   the benchmark fixes them. A submitter does not choose them.
+5. **A submission carries its runs, its harness, and which version's reader, judge
+   and prompts it used.**
+6. **The harness has to be one a customer could use**, the product's own SDK for
+   instance. A number produced through a path only its author can reach is not a
+   number anyone else can get.
+7. **The engine stays closed if you want.** Nothing here asks how a system works.
+8. **Three runs is a result. Five is certified.**
+9. **A glasshouse score is one measured here.** Take the benchmark and run it
+   anywhere you like; that is what the licence is for. What cannot travel is the
+   name.
+10. **What the vote picks goes into the next version.** Comments and pull requests
+    arrive against a version that is already out and cannot change. They are voted on,
+    and what wins is in the next one.
+11. **Wontopos publishes nothing on a new version for fourteen days.**
 
 Tear them up or add to them. That is the starting point, not the answer.
 
@@ -42,10 +57,12 @@ be taken and run elsewhere without asking us.
 
 ## Layout
 
+    glasshouse-v0.1/         the benchmark. One directory per version, kept.
+                             v0.1 is not drafted yet
     companies/<company>.md   the company's own words, and its claims
     individuals/             corrections, objections, recomputations, harness work
     schema/                  the submission manifest format
-    submissions/             verified results. Empty.
+    submissions/<version>/   verified results. Empty.
 
 A company writes its own description and its own model entries. Nobody rewrites
 another company's account of itself.
@@ -68,7 +85,3 @@ it points at. If the record does not reproduce the number in the manifest, the
 submission does not go in.
 
 `submissions/` is empty. The rules went up first, and we have not submitted either.
-
-## Open question
-
-The threshold in rule 4 is not settled. What number is right?

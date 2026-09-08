@@ -5,26 +5,28 @@ the per-question record it points at. Either one alone is not a result.
 
 ## Layout
 
-    submissions/<system>/<benchmark>/<date>/
+    submissions/<version>/<system>/<date>/
       manifest.json      what ran, and how it was scored
       records/           one file per question, or one file with one line per question
       README.md          anything a reader needs that the manifest cannot hold
+
+`<version>` is the benchmark version you ran, e.g. `v0.1`. Each version lives in its
+own directory at the root of this repository and does not change once published.
 
 ## The manifest
 
 See [schema/submission.schema.json](schema/submission.schema.json). Every field in
 `required` has to be there. The parts that matter most:
 
-- **reader** — the model that answers, its settings, and how it was invoked. A score
-  is a property of the memory system *and* the reader. Reporting one without the
-  other is the thing this repository exists to stop.
-- **judge** — the model that grades, its temperature, and the grading prompt
-  verbatim. If the benchmark does not name a judge, say so and say what you chose.
-- **prompts** — the exact text, not a description of it.
-- **scoring** — the rubric, and anything in the benchmark's own script you did not
+- **reader**, **judge**, **prompts**: set by the version you ran. Record which
+  version, so a reader knows what produced the number. You do not choose them.
+- **harness**: how the run reached the system, and it has to be a path a customer
+  could use. The product's own SDK counts. A private route does not.
+- **engine**: not required. Nothing here asks how a system works.
+- **scoring**: the rubric, and anything in the benchmark's own script you did not
   implement. Say what you left out. That is a normal thing to have to say.
-- **runs** — every run you did, not the best one. If you report a mean, the runs it
-  is a mean of have to be here.
+- **runs**: every run you did, not the best one. If you report a mean, the runs it
+  is a mean of have to be here. Three runs is a result. Five is certified.
 
 ## The record
 
