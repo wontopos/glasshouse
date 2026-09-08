@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wontopos/glasshouse/schema/submission.schema.json",
+  "title": "glasshouse submission manifest",
+  "description": "What produced a benchmark number. Modelled on a manifest that was already being used to publish a real run, not designed from scratch: every field here exists because leaving it out made a published score impossible to reproduce.",
+  "type": "object",
+  "required": ["benchmark", "system", "reader", "judge", "prompts", "scoring", "runs", "records"],
+  "additionalProperties": true,
+  "properties": {
+    "benchmark": {
+      "type": "object",
+      "required": ["name", "source"],
+      "properties": {
+        "name": { "type": "string", "description": "e.g. LongMemEval-S, BEAM 1M, LoCoMo" },
+        "source": { "type": "string", "description": "paper, arXiv id, or repository the dataset and script came from" },
+        "revision": { "type": "string", "description": "commit or release of that source. Two people running 'the same benchmark' a year apart are often not." }
+      }
+    },
+    "system": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "hosted": { "type": "boolean", "description": "true if the run went to a service the submitter operates. A hosted system cannot be re-run by a reader, which is a fact about the result, not a disqualification." },
+        "build": { "type": "string", "description": "commit or artefact hash, when there is one" }
+      }
+    },
+    "corpus": {
+      "type": "object",
+      "description": "What was ingested. Two runs of the same benchmark can differ here.",
+      "properties": {
+        "conversations": { "type": "integer" },
+        "turns": { "type": "integer" },
+        "items_stored": { "type": "integer" },
+        "ingest_failures": { "type": "integer", "description": "Report it even when it is zero, so a reader knows it was counted." },
+        "truncated": { "type": "integer" }
+      }
+    },
+    "reader": {
+      "type": "object",
+      "description": "The model that answers from what the memory system returned. A score belongs to the pair, never to the memory system alone.",
+      "required": ["model"],
+      "properties": {
+        "model": { "type": "string" },
+        "effort": { "type": "string" },
+        "temperature": { "type": "number" },
+        "via": { "type": "string", "description": "how it was invoked, e.g. an API, a CLI" }
+      }
+    },
+    "judge": {
+      "type": "object",
+      "required": ["model", "prompt"],
+      "properties": {
+        "model": { "type": "string" },
+        "temperature": { "type": "number" },
+        "prompt": { "type": "string", "description": "verbatim, or a path to it in this submission. Not a description." },
+        "note": { "type": "string", "description": "if the benchmark does not specify a judge, say that here and say what you chose" }
+      }
+    },
+    "prompts": {
+      "type": "object",
+      "description": "Verbatim text or paths to it. A described prompt is not a published prompt.",
+      "required": ["reader"],
+      "properties": {
+        "reader": { "type": "string" },
+        "query_transform": { "type": "string", "description": "anything applied to the question before retrieval" }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "required": ["rubric"],
+      "properties": {
+        "rubric": { "type": "string" },
+        "aggregation": { "type": "string", "description": "how per-question grades become the headline number" },
+        "not_implemented": { "type": "string", "description": "parts of the benchmark's own scoring you did not run. Saying so is normal and is what makes two numbers comparable." }
+      }
+    },
+    "runs": {
+      "type": "array",
+      "description": "Every run, not the best one. A mean has to show what it is a mean of.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "n", "score"],
+        "properties": {
+          "id": { "type": "string" },
+          "n": { "type": "integer", "description": "questions attempted" },
+          "errors": { "type": "integer", "description": "questions that did not complete. A question that errored is not a question that was answered wrong, and the difference has to be visible." },
+          "score": { "type": "number" },
+          "config": { "type": "object", "description": "every knob that was set" }
+        }
+      }
+    },
+    "headline": {
+      "type": "object",
+      "description": "The single number you would put in a post, and how it comes from runs.",
+      "properties": {
+        "score": { "type": "number" },
+        "from": { "type": "string", "description": "e.g. mean of runs r1, r2, r3" },
+        "stdev": { "type": "number" }
+      }
+    },
+    "records": {
+      "type": "string",
+      "description": "Path to the per-question record in this submission. Adding up what is there has to give the headline."
+    },
+    "submitter": {
+      "type": "object",
+      "required": ["name", "affiliation"],
+      "properties": {
+        "name": { "type": "string" },
+        "affiliation": { "type": "string", "description": "who you work for. Used for the conflict-of-interest rule, not to weigh the result." },
+        "contact": { "type": "string" }
+      }
+    }
+  }
+}
