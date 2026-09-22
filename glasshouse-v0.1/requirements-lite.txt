@@ -1,0 +1,17 @@
+# glasshouse v0.1: scoring only
+#
+# There is nothing to install. score.py and judge.py import only the Python
+# standard library. The judge calls its model over plain urllib, so no SDK is
+# needed either.
+#
+# Python 3.8 or newer.
+#
+#   python score.py results.jsonl --questions questions_full.jsonl --mode memory
+#
+# This file exists so that "which dependencies do I need to score?" has an
+# answer in the repository rather than in someone's head. The answer is none.
+#
+# Running the judge (--mode memory or --mode answer) needs one environment
+# variable, not a package:
+#
+#   OPENROUTER_API_KEY

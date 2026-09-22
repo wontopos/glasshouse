@@ -1,0 +1,55 @@
+# For problems with the conversation or a document, where there is no question id.
+#
+# Kept apart from the question form because a conversation defect has no question id:
+# one turn can touch several questions or none. Folded into one form, the required
+# question id field would make it impossible to send.
+
+name: The conversation or a document looks wrong
+description: The assistant speaks as the user, the conversation contradicts itself, a translation reads wrong, a document is wrong
+title: "[corpus/doc] "
+labels: ["corpus", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If it concerns a specific question id, please use the **question form** instead.
+        This one is for the conversation itself or for a document.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What
+      options:
+        - the assistant speaks as the user
+        - the conversation contradicts itself
+        - a translation reads wrong
+        - a document says something untrue
+        - a number does not match the files
+        - something else
+    validations:
+      required: true
+
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: >-
+        Whichever you know: a turn number with its tier, a file name, or a section title.
+      placeholder: "full turn 54412  /  README.md, section 'Speed'"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What is wrong
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: A sentence copied as it appears is best.
+    validations:
+      required: true

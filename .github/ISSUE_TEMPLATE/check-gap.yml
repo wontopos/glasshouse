@@ -1,0 +1,44 @@
+# For something no check looks at.
+#
+# This may be the most valuable form in the repository. The defect found most often
+# here was a check that looked at less than it claimed to, which a passing count cannot
+# show. Found that way: 142 probes scoring in reverse, three axes missing from the
+# weights table so 46% of questions used a default, and a submission guide that crashed
+# the scorer when followed. Each was a place no check covered.
+
+name: Something nothing checks
+description: Something should be checked, and nothing seems to check it
+title: "[gap] "
+labels: ["gap", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We list what we do not check in the README section
+        "What was checked, and what was not". If something belongs on that
+        list and is not there, this is the place.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What is not checked
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: >-
+        How a score goes wrong if this is wrong. For example: "a system that remembered
+        correctly is marked wrong."
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: A concrete case
+      description: Optional. A question id or turn number makes it much faster to confirm.
+    validations:
+      required: false

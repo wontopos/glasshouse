@@ -1,0 +1,108 @@
+# Form for reporting that a question is wrong.
+#
+# No other benchmark we looked at had one (2026-09-16). openai/evals and
+# huggingface/datasets have issue forms, but both are for software bugs: they ask for
+# the OS, the Python version and library versions. lm-evaluation-harness, BIG-bench,
+# HELM and LongMemEval have none. Benchmarks are usually released as data and treated
+# like software, so there is no path for "this question is wrong". There was nothing to
+# copy, so this was built around the shape of this data.
+#
+# Why it asks for only three things:
+#   question id  without it, 2,847 questions have to be searched again
+#   tier         turn_id restarts at 1 in every tier, so core 12 is not full 12
+#   evidence     without it, our reading beats yours, which is not the point
+#
+# The data files are generated from unpublished source tables, so a fix is made at the
+# source and this form is the way in; a pull request that edits the data would be
+# overwritten.
+
+name: A question looks wrong
+description: The gold answer, the wording, the evidence turns or the axis seem wrong
+title: "[question] "
+labels: ["question", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is for fixing the test itself, not for reporting a score.
+        For scores see `SUBMITTING.md`.
+
+        **Please open one issue per question.** Several questions in one issue tend to get
+        one fixed and the issue closed.
+
+        The data files are generated from source tables that are not published, because
+        those tables contain the answers. So a fix goes through this issue rather than a
+        pull request: we fix it at the source and credit you in the version that carries it.
+
+  - type: input
+    id: qid
+    attributes:
+      label: Question id
+      description: Exactly as it appears in the question file. Q001, I042, P0123, L2-0007
+      placeholder: Q0042
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Which tier
+      description: >-
+        turn_id restarts at 1 in every tier. Turn 12 of core is not turn 12 of full.
+        If you cite a turn number, this is required to find it.
+      options:
+        - full
+        - medium
+        - small
+        - core
+        - not referring to a turn
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is wrong
+      options:
+        - the gold answer contradicts the conversation
+        - two answers are equally defensible
+        - the wording is ambiguous
+        - a correct answer is marked wrong (gold_alts too narrow)
+        - evidence_turns points at a turn without the answer
+        - wrong axis
+        - answerable without memory
+        - something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: Describe it
+      description: One or two lines is enough.
+      placeholder: |
+        The gold answer is "three times a week" but the conversation says twice a week.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: >-
+        A turn number, or a sentence copied from the conversation. **This is the most
+        important field on the form.** Without evidence, our reading beats yours, which is
+        the opposite of why this benchmark exists.
+      placeholder: |
+        Turn 31385 (full): "So I'm going to bump it to 4 times a week"
+    validations:
+      required: true
+
+  - type: textarea
+    id: fix
+    attributes:
+      label: Suggested fix
+      description: >-
+        Optional. What the gold answer, wording or evidence turns should be instead.
+    validations:
+      required: false

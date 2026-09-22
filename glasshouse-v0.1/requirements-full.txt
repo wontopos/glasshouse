@@ -1,0 +1,18 @@
+# glasshouse v0.1: optional packages
+#
+# Scoring a run needs nothing beyond Python. See requirements-lite.txt.
+#
+# The one shipped file that needs an outside package is vector_baseline.py.
+# Pinned to what the published vector baseline was measured with
+# (Python 3.10.11, torch 2.14.0+cpu, transformers 5.17.0, numpy 2.2.6).
+# Use a Python version that torch installs on; the run file it writes can be
+# scored with any Python.
+
+sentence-transformers==6.0.1   # vector_baseline.py only
+
+# Not reproducible from this repository:
+#
+#   The corpus, the questions and the photographs. They are generated from source
+#   tables that are not published, because those tables contain the answers.
+#   The photographs were generated with the flux model through Pollinations and
+#   are shipped as PNG files under img/, with their SHA-256 in HASHES.json.

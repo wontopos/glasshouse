@@ -1,0 +1,9 @@
+# Shown before an issue is opened.
+# Blank issues stay enabled: blocking anything that does not fit a form means only what
+# the form's author thought of gets in, and the most important reports usually arrive in
+# a shape nobody anticipated.
+blank_issues_enabled: true
+contact_links:
+  - name: I want to submit a score
+    url: https://github.com/wontopos/glasshouse/blob/main/CONTRIBUTING.md
+    about: That is a submission, not an issue. See SUBMITTING.md and CONTRIBUTING.md.
