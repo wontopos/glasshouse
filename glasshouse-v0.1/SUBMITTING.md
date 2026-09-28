@@ -72,13 +72,23 @@ in English as normal. See "The language axis" in the README.
 
 ---
 
+## Store every turn
+
+**Store every turn of the tier file you name, in file order.** A run that stores only some of
+them, chosen by content, by position or with the help of the question files, is not a run of
+that tier and is not accepted. In the manifest, `corpus.turns` is that tier's turn count and
+`corpus.ingest_failures` is how many of them did not go in, reported even when it is zero.
+
+---
+
 ## What a submitted result must state
 
 A number with none of this attached cannot be checked by anyone, so it is not accepted.
 
 1. **which tier** you ran, and which question file
 2. **which mode** (`memory`, `answer` or `dry`)
-3. **which answer model**, if `answer_generated` is true
+3. **which answer model**, if `answer_generated` is true. For a v0.1 score it is the official
+   reader (README, "Who decides")
 4. **the retrieval budget** you used
 5. **the date** and the version of the benchmark
 
@@ -89,8 +99,8 @@ the wording differs, so it is never a published number.
 
 ## Sending it
 
-Open a pull request that adds a directory laid out the way `CONTRIBUTING.md` in
-`glasshouse_docs/` describes:
+Open a pull request that adds a directory laid out the way
+[CONTRIBUTING.md](../CONTRIBUTING.md) describes:
 
     submissions/<version>/<system>/<date>/
       manifest.json      what ran, and how it was scored

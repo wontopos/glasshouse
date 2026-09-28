@@ -58,7 +58,7 @@ be taken and run elsewhere without asking us.
 ## Layout
 
     glasshouse-v0.1/         the benchmark. One directory per version, kept.
-                             v0.1 is not drafted yet
+                             v0.1 is a draft, not released yet
     companies/<company>.md   the company's own words, and its claims
     individuals/             corrections, objections, recomputations, harness work
     schema/                  the submission manifest format
@@ -70,8 +70,8 @@ another company's account of itself.
 ## The claims register
 
 `companies/` holds numbers that are already public. **None of them were produced
-here.** This repository has no benchmark of its own yet, and nothing in it has been
-verified.
+here.** This repository has not released a benchmark of its own yet, and nothing in it has
+been verified.
 
 They are written down anyway, because a claim on a page is hard to check and a claim
 in a table with its reader, its judge and its run count is not. Several rows say the reader

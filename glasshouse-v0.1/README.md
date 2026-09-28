@@ -50,19 +50,19 @@ fails safely and one that states something that stopped being true months ago.
 
 `ABSTAIN` and `FALSE_MEMORY` both reward saying "I don't know", but they are not the same
 test. `FALSE_MEMORY` plants a false claim in the question; `ABSTAIN` just asks. A system that
-answers "I don't know" to everything scores full marks on both and zero on the other nine.
+answers "I don't know" to everything scores full marks on both, half on `UPDATE`, `STALE` and
+`CONTRADICT`, and zero on the other twelve.
 
 ---
 
-## Corpus files: the two you run are `core` and `full`
+## Corpus files: the one you run is `full`
 
-There are four files, but **the standard run is two tiers.** `small` and `medium` are
-intermediate marks, left in the release but out of the default run (see "The standard
-run is two tiers" below).
+There are four files, but **the standard run is `full`.** `core`, `small` and `medium` are
+left in the release but out of the default run (see "The standard run is `full`" below).
 
 | File | Standard run | Sessions | Turns | Photos | Multilingual sessions | Tokens |
 |---|---|---|---|---|---|---|
-| `glasshouse_v0.1_core.jsonl` | **yes** | 96 | 1,882 | 0 | 0 | 78,584 |
+| `glasshouse_v0.1_core.jsonl` | no | 96 | 1,882 | 0 | 0 | 78,584 |
 | `glasshouse_v0.1_small.jsonl` | no | 259 | 7,186 | 50 | 100 | 192,407 |
 | `glasshouse_v0.1_medium.jsonl` | no | 364 | 12,884 | 50 | 100 | 297,892 |
 | `glasshouse_v0.1_full.jsonl` | **yes** | 1,991 | 103,572 | 50 | 100 | 1,971,338 |
@@ -113,16 +113,16 @@ held byte-for-byte constant while the corpus grows 55 times, from 1,882 turns to
 103,572. Where the score falls apart tells you whether a system holds up under
 accumulation or is just a dumpster.
 
-### The standard run is two tiers, `core` and `full`
+### The standard run is `full`
 
-You do not need all four. **`core` and `full` are the standard run.** `small` and
-`medium` are intermediate marks, useful when you want to see where a system starts
-to slip rather than only that it does.
+You do not need all four. **`full` is the standard run.** `core` is its control, and
+`small` and `medium` are intermediate marks, useful when you want to see where a system
+starts to slip rather than only that it does.
 
 | Tiers run | Questions | Cost vs `full` alone | What you learn |
 |---|---|---|---|
-| `full` only | 1,547 | 1.0x | One number, and no way to say why |
-| **`core` + `full`** | **2,180** | **about 1.4x** | **Whether the loss is skill or volume** |
+| **`full` only** | **1,547** | **1.0x** | **One number, and no way to say why** |
+| `core` + `full` | 2,180 | about 1.4x | Whether the loss is skill or volume |
 | All four | 3,892 | about 2.5x | Where along the curve it breaks |
 
 `core` does two jobs.
@@ -143,9 +143,9 @@ someone has to separate "they are all bad" from "our questions are ambiguous". I
 questions, not the system. We are publishing a benchmark nobody has reason to trust
 yet, so that check matters.
 
-⚠️ **A `core` score does not demonstrate the value of a memory system.** At 90,870
+⚠️ **A `core` score does not demonstrate the value of a memory system.** At 78,584
 tokens, `core` fits whole inside a current context window, so it can be solved by
-pasting the entire history into the prompt. `full` is 2.18 million tokens and does not
+pasting the entire history into the prompt. `full` is 1.97 million tokens and does not
 fit even a 1M window, which is where a memory system stops being optional. `core`
 exists to make the `full` number interpretable.
 
@@ -163,19 +163,18 @@ data there yet". Tier comparison needs no such filter: the answers are always al
 ## Turn format
 
 ```json
-{"turn_id": 11, "session_id": 1, "kind": "noise", "category": "daily_life",
- "speaker": "user", "text": "Grabbed a spot and stepped out for a minute.",
- "image": "img/img36.png", "image_no": 36, "date": "2026-02-22"}
+{"turn_id": 57881, "session_id": 1126, "speaker": "user",
+ "text": "Grabbed a spot and stepped out for a minute.",
+ "image": "img/img36.png", "image_no": 36, "date": "2026-08-27"}
 ```
 
 | Field | |
 |---|---|
-| `kind` | `core` (the story we wrote) or `noise` (filler) |
-| `category` | topic. `farming` or `coding` for core, `multilingual` for the language sessions |
 | `date` | every session has one. The story runs 2026-03-02 to 2027-07-05 |
 | `image` | present on the one turn that carries a photograph |
-| `lang` | present on turns in the 100 foreign-language sessions |
-| `core_session` | on core turns, which of the 96 sessions this is |
+
+No field says which turns are the story, the filler or a foreign-language session. Filtering
+on one would point straight at the answers (see "How the run itself is constrained").
 
 ---
 
@@ -185,7 +184,7 @@ data there yet". Tier comparison needs no such filter: the answers are always al
 {"id": "Q001", "axis": "BASIC", "need": ["F001"], "session": 1,
  "question_en": "How big is their plot?", "gold_answer": "a quarter acre",
  "expect": "answer",
- "evidence_turns": [173], "evidence_sessions": [1], "evidence_pinned": true}
+ "evidence_turns": [1507], "evidence_sessions": [1], "evidence_pinned": true}
 ```
 
 | Field | |
@@ -241,7 +240,7 @@ Without it a wrong answer tells you nothing about which half of the system to fi
 
 ```bash
 # 1. store every turn of the conversation in your memory system, in file order.
-#    glasshouse_v0.1_medium.jsonl, one JSON object per line. We ship no runner for
+#    glasshouse_v0.1_full.jsonl, one JSON object per line. We ship no runner for
 #    this step: it is the one part only you can write, because only you know how
 #    your system ingests.
 
@@ -252,8 +251,8 @@ Without it a wrong answer tells you nothing about which half of the system to fi
 # 3. score. memory and answer call a judge LLM through OpenRouter on your own key,
 #    once per question, and that key is billed
 export OPENROUTER_API_KEY=...
-python score.py your_run.jsonl --questions questions_medium.jsonl --mode memory
-python score.py your_xling_run.jsonl --questions questions_xling.jsonl --tier medium --mode memory
+python score.py your_run.jsonl --questions questions_full.jsonl --mode memory
+python score.py your_xling_run.jsonl --questions questions_xling.jsonl --tier full --mode memory
 ```
 
 We deliberately ship no ingest runner. One would have to pick a client, and the only client
@@ -297,7 +296,7 @@ regressions while building, not to publish a number.
 ⚠️ `--mode` is required and the scorer refuses to run without it. `memory` and `answer`
    spend money, so they stay off until whoever owns the API key turns them on.
 
-Answers here are short by design (median 5 characters), which is what makes `dry` usable at
+Answers here are short by design (median 15 characters), which is what makes `dry` usable at
 all. A benchmark whose gold answers are paragraphs cannot be scored this way.
 
 ### Per axis scoring: what counts as right
@@ -347,7 +346,7 @@ it is not.
 ⚠️ `RECONCILE` and `CONTRADICT` score in opposite directions. "These two disagree" is full
    credit in `CONTRADICT` and zero in `RECONCILE`, because there they do not disagree.
 
-⚠️ `GATHER` is the only proportional axis. One of three pieces scores 0.33.
+⚠️ `GATHER` is the only proportional axis. One of two pieces scores 0.5.
 
 ⚠️ In `UPDATE` the old value scores zero. Serving it is not "found less", it is stating a
    wrong value with confidence.
@@ -466,8 +465,8 @@ hedge, and produced no malformed verdict and no verdict without a stated reason.
 
 #### The answer model and the judge model must not be the same
 
-`gpt-4o-mini` is the only candidate that let plausible wrong answers through, at 10 percent,
-and it is our default answer model. Self-preference, a judge being lenient toward its own
+`gpt-4o-mini` is the candidate that let the most plausible wrong answers through, at 10 percent,
+and it was our default answer model. Self-preference, a judge being lenient toward its own
 model's output, showed up in our own data. So the two roles never share a model here.
 
 This is not only our finding. *Reliability without Validity* (arXiv 2606.19544) covers 21
@@ -505,7 +504,7 @@ value with no evidence for it; a model that scores when retrieval failed breaks 
 **No candidate refused on content grounds, in any condition.** No model declined a request to
 answer from supplied memories.
 
-⚠️⚠️ **A limit you must know before reading any score.** The default answer model,
+⚠️⚠️ **A limit you must know before reading any score.** The answer model we used first,
 `gpt-4o-mini`, reads out only 58.9 percent of answers **that are sitting in front of it**.
 The other 41 percent is lost by the reader, not by the memory system. Therefore:
 
@@ -514,40 +513,19 @@ The other 41 percent is lost by the reader, not by the memory system. Therefore:
   · **the gaps between systems compress too.** Less room separates good memory from bad
   · **changing the answer model changes every number,** which is why the run record states it
 
-`claude-haiku-4.5` reads 11.3 points more and loses only 1.2 points when fillers are added,
-against 4.1 for gpt-4o-mini. It is the better instrument at roughly seven times the price. You
-may swap it in as long as you say so: `--answer-model anthropic/claude-haiku-4.5`
+The official reader for v0.1 is `anthropic/claude-opus-5.5` at `medium` effort. It always
+thinks before answering and cannot be told not to, so the effort is part of the setting: it is
+fixed in `judge.py` and written into the run summary next to the model. It is not in the table
+above yet.
 
-#### Who decides: the judge is fixed, the answer model is yours
+#### Who decides: the version fixes the judge and the reader
 
 | | who chooses | why |
 |---|---|---|
-| **judge** | **we fix it.** Changing it requires measuring and publishing new grounds | if the instrument moves, comparing systems means nothing |
-| **answer model** | **you choose** | the number is only useful if it comes from the model you would actually deploy |
+| **judge** | **we fix it.** `google/gemini-3.7-flash`. Changing it requires measuring and publishing new grounds | if the instrument moves, comparing systems means nothing |
+| **reader** | **we fix it.** `anthropic/claude-opus-5.5` at `medium` effort | changing the reader changes every number |
 
-Not any model, though. An answer model can answer **without the memory at all**, and then the
-benchmark measures what that model already knew instead of what the memory returned.
-
-⚠️ So we do not hand-pick the allowed list. If we picked it, the obvious response is *"they
-allowed only the models that flatter them"*. Instead there is a bar anyone clears with the same script.
-
-| | requirement | why |
-|---|---|---|
-| 1 | public API, callable by anyone, version pinnable | a third party has to be able to reproduce the run |
-| 2 | zero refusals on content grounds | a refusal scores zero, and that is not the memory's fault |
-| 3 | zero empty answers | same as above |
-| 4 | produces a value with no evidence at most 20 percent of the time | scoring when retrieval failed breaks the benchmark |
-| 5 | those numbers measured with `pick_answer_llm.py --run` and published | measured, not asserted |
-
-**An unmeasured model may still be used.** The run record marks it **unverified** and that label
-travels with the result. We surface it rather than block it. A run prints:
-
-```
-answer model: pass        58.9% with evidence, 54.8% with fillers, 11.9% invented without evidence
-answer model: below bar   14 empty answers out of 84 (rule 3)
-answer model: unverified  not measured by us; run pick_answer_llm.py --run and publish the numbers
-answer model: not allowed same model as the judge; it would grade its own answers
-```
+A run read by another model is not a v0.1 score. Changing either one takes a new version.
 
 ### Reproduction tolerance: not set yet
 
@@ -584,7 +562,7 @@ one memory across devices. Whichever applies, a different paired model moves the
 so set it yourself. That leaves **500 ms for retrieval** at the default:
 
 ```
-python score.py run.jsonl --questions questions_medium.jsonl --mode memory \
+python score.py run.jsonl --questions questions_full.jsonl --mode memory \
        --llm-ttft 300          # target becomes 700 ms
 ```
 
@@ -713,7 +691,7 @@ memory did on its own; it is memory plus a vision model, and the record has to s
 meant declining the hard questions raised the total: 200 right and 286 wrong is 41%, while
 200 right and 286 blank was 100%. An empty answer is also not an abstention. Saying the
 conversation never mentioned something is a judgement; returning nothing is indistinguishable
-from a crash, and treating it as an abstention hands over all sixteen abstention questions to
+from a crash, and treating it as an abstention hands over all 49 abstention questions to
 a system that answers nothing at all.
 
 **Ingest time is recorded.** Retrieval speed says little if loading the corpus takes hours,
@@ -991,7 +969,7 @@ answers pointing at the wrong turns, sentences repeating.
 This one runs the other way.
 
 ```
-190 facts decided  →  conversation written to contain them  →  questions derived from the facts
+397 facts decided  →  conversation written to contain them  →  questions derived from the facts
 ```
 
 Because the questions come from the fact list and not from the conversation text, the answer
@@ -1004,7 +982,7 @@ common sense tests common sense, not memory.** Nineteen such facts were replaced
 
 ## Limitations
 
-**The conversation is synthetic.** One fictional person, one year, written for this purpose.
+**The conversation is synthetic.** One fictional person, sixteen months, written for this purpose.
 It is not a transcript of anything.
 
 **The filler is reused.** It comes from an earlier version of this benchmark, which was itself model
@@ -1056,6 +1034,10 @@ Licence section, not here.
 counting. Where the model produced four candles instead of three, the answer was changed to
 match the image rather than the image regenerated.
 
+⚠️ **The floor and ceiling below were measured before the official reader was set,** with the
+answer model in use at the time, not `claude-opus-5.5`. Both depend on the reader. We will
+measure them again with the official reader and post the result by 2026-10-05.
+
 > **These two numbers were re-measured on 2026-09-16** against the current build
 > (`floor_ceiling.py --run`, 1,348 questions, $1.61 of actual spend).
 >
@@ -1101,13 +1083,13 @@ axes exist to catch exactly the failure the model is showing, and it shows it ev
 conflicting values sit in front of it. The stronger reader missed 27 of 29 `CONTRADICT`
 questions too, which is the same finding measured twice.
 
-**`evidence_turns` is exact for 648 questions and approximate for 91.** Where a fact could not
-be pinned to a single turn, the whole session is listed instead. A further 28 have no evidence
-at all, which is correct: those are the `ABSTAIN` questions.
+**`evidence_turns` is exact for 1,402 questions and approximate for 96** (in `full`). Where a
+fact could not be pinned to a single turn, the whole session is listed instead. A further 49 have
+no evidence at all, which is correct: those are the `ABSTAIN` questions.
 
 **Silent scope drift is still not measured.** A label that stays the same while the thing
 underneath it changes does not look like a change in the history at all, and nothing here
-tests for it. Outright contradiction is now covered by `CONTRADICT`, but only seven questions
+tests for it. Outright contradiction is now covered by `CONTRADICT`, but below `full` only seven questions
 carry that axis, which is too few to read a percentage from with any confidence.
 
 ## What was checked, and what was not
@@ -1147,8 +1129,8 @@ the fact (`t1_backtrans_read.json`); the 50 photographs, compared against their 
 eye (`img_verified.json`). If the text they describe changes, the record stops matching and
 the build fails rather than carrying an old stamp forward.
 
-**Not checked, and not claimed.** The 101,690 filler turns have not been read end to end by
-anyone. Neither has every one of the 1,547 main questions. Nothing here verifies that a
+**Not checked, and not claimed.** The 101,690 turns outside our story (100,490 filler and
+1,200 in the foreign-language sessions) have not been read end to end by anyone. Neither has every one of the 1,547 main questions. Nothing here verifies that a
 question is a *good* question: that it has exactly one defensible answer, that the phrasing
 is not subtly ambiguous, that a reasonable system could not answer differently and be right.
 The Korean throughout is not native speaker verified. The conversation is synthetic and reads
@@ -1214,7 +1196,7 @@ to work out, an issue on its own is completely fine and is the more common case.
 
 ⚠️ **A published version does not change.** Corrections land in the next one. A score that
 moves after it has been cited is a score nobody can cite, and the glasshouse repository
-holds itself to the same rule (`glasshouse_docs/GOVERNANCE.md`).
+holds itself to the same rule ([GOVERNANCE.md](../GOVERNANCE.md)).
 
 ---
 
@@ -1237,7 +1219,7 @@ holds itself to the same rule (`glasshouse_docs/GOVERNANCE.md`).
 | `CREDITS.md` | where the axes came from |
 | `LICENSE`, `CITATION.cff` | Apache 2.0, and how to cite |
 | `requirements-lite.txt`, `requirements-full.txt` | nothing for scoring; one package for the vector baseline |
-| `.github/` | the submission scoring workflow, issue forms and the PR template |
+| `../.github/` | the submission scoring workflow, issue forms and the PR template |
 
 The source tables the data is generated from are not published, because they contain the
 answers. That is also why a question fix goes through an issue rather than a pull request.

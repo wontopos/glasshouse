@@ -16,8 +16,9 @@ Design decisions (things the spec has to state):
   · Two scoring modes, both using the judge.
       memory  the judge reads the retrieved memories       -> judge_memory()
       answer  the judge reads the answer an LLM wrote      -> judge_answer()
-    Answer model = gpt-4o-mini (operator's choice).
-  · temperature 0.
+    Answer model = claude-opus-5.5 at medium effort, the official reader for v0.1.
+  · temperature 0 for the judge. The answer model always thinks and takes no temperature;
+    its effort is set here and written into the run summary.
 """
 import os, json, time, urllib.request
 
@@ -36,7 +37,11 @@ JUDGES = [
     ("google/gemini-3.7-flash", "Gemini 3.7 Flash"),
 ]
 JUDGE_MAX_TOKENS = 2000   # A reasoning model, so generous. Too short and the body comes back empty.
-ANSWER_MODEL = "openai/gpt-4o-mini"      # operator's choice
+ANSWER_MODEL = "anthropic/claude-opus-5.5"   # the official reader for v0.1
+# Thinking cannot be turned off on this model. OpenRouter defaults it to high, so the
+# effort is always sent. Thinking counts against max_tokens: too short and the body is empty.
+ANSWER_EFFORT = "medium"
+ANSWER_MAX_TOKENS = 16000
 
 # ── Judge prompts ─────────────────────────────────────────────────────
 #
@@ -228,6 +233,7 @@ Reply with exactly one word: CORRECT or WRONG."""
 PROVIDER_ORDER = {
     "openai/gpt-4o-mini":          ["OpenAI"],
     "anthropic/claude-haiku-4.5":  ["Anthropic"],
+    "anthropic/claude-opus-5.5":   ["Anthropic"],
     "google/gemini-2.5-flash":     ["Google AI Studio", "Google Vertex"],
     "google/gemini-3.7-flash":     ["Google AI Studio", "Google Vertex"],
     "google/gemini-3.1-flash-lite":["Google AI Studio", "Google Vertex"],
@@ -235,7 +241,8 @@ PROVIDER_ORDER = {
 PROVIDERS_SEEN = {}     # collects the servers that actually answered during the run
 
 
-def _call(model, prompt, key, max_tokens=200, retries=3, want_usage=False):
+def _call(model, prompt, key, max_tokens=200, retries=3, want_usage=False,
+          effort=None, timeout=90):
     """With want_usage=True, returns (body, usage).
 
     ⚠️ Tokens are **not estimated.** The API returns in usage the count made by that
@@ -244,9 +251,13 @@ def _call(model, prompt, key, max_tokens=200, retries=3, want_usage=False):
        its own paper when the real figure turned out to be 4.5 to 5.0, a 33 to 72%
        overstatement."""
     payload = {
-        "model": model, "temperature": 0, "max_tokens": max_tokens,
+        "model": model, "max_tokens": max_tokens,
         "messages": [{"role": "user", "content": prompt}],
     }
+    if effort:
+        payload["reasoning"] = {"effort": effort}
+    else:
+        payload["temperature"] = 0
     if model in PROVIDER_ORDER:
         payload["provider"] = {"order": PROVIDER_ORDER[model], "allow_fallbacks": False}
     body = json.dumps(payload).encode()
@@ -255,7 +266,7 @@ def _call(model, prompt, key, max_tokens=200, retries=3, want_usage=False):
     last = None
     for i in range(retries):
         try:
-            with urllib.request.urlopen(req, timeout=90) as r:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
                 d = json.load(r)
             PROVIDERS_SEEN.setdefault(model, set()).add(d.get("provider", "?"))
             c = d["choices"][0]["message"].get("content")
@@ -273,6 +284,7 @@ def _call(model, prompt, key, max_tokens=200, retries=3, want_usage=False):
 def generate_answer(question, memories, key, want_usage=False):
     mems = chr(10).join("- %s" % m for m in memories) or "(none)"
     return _call(ANSWER_MODEL, ANSWER_PROMPT.format(mems=mems, q=question), key,
+                 max_tokens=ANSWER_MAX_TOKENS, effort=ANSWER_EFFORT, timeout=300,
                  want_usage=want_usage)
 
 
@@ -282,8 +294,10 @@ def empty_prompt_tokens(key):
     Subtracting this gives **the share taken by the memories.** The prompt template and
     the question use tokens too; without subtracting, a system with short memories looks
     worse than it is."""
+    # Same settings as generate_answer. With max_tokens=1 a thinking model returns no body.
     _t, u = _call(ANSWER_MODEL, ANSWER_PROMPT.format(mems="(none)", q="x"), key,
-                  max_tokens=1, want_usage=True)
+                  max_tokens=ANSWER_MAX_TOKENS, effort=ANSWER_EFFORT, timeout=300,
+                  want_usage=True)
     return u.get("prompt_tokens") or 0
 
 

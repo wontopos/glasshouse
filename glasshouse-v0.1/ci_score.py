@@ -46,8 +46,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "replace")
 
-SUB_DIR = os.path.join(HERE, "submissions")
-SCHEMA_P = os.path.join(HERE, "glasshouse_docs", "submission.schema.json")
+# This folder sits at the root of the glasshouse repository, next to submissions/ and schema/.
+ROOT = os.path.dirname(HERE)
+SUB_DIR = os.path.join(ROOT, "submissions", "v0.1")
+SCHEMA_P = os.path.join(ROOT, "schema", "submission.schema.json")
 
 # The tier is identified **by turn count,** to avoid adding a manifest field only we know
 # about. corpus.turns already exists in the published schema.
@@ -262,7 +264,7 @@ def headline_check(man, files):
 
 def one(d):
     print("─" * 70)
-    print(u"submission: %s" % os.path.relpath(d, HERE))
+    print(u"submission: %s" % os.path.relpath(d, ROOT))
     man_p = os.path.join(d, "manifest.json")
     if not os.path.exists(man_p):
         return fail(u"no manifest.json. Follow the folder layout in CONTRIBUTING.md")
@@ -273,7 +275,7 @@ def one(d):
 
     schema = load_schema()
     if schema is None:
-        return fail(u"schema copy not found: glasshouse_docs/submission.schema.json")
+        return fail(u"schema not found: schema/submission.schema.json")
     ok = check_required(man, schema)
     ok = check_rules(man) and ok
 
@@ -346,7 +348,7 @@ def main():
         subs = [os.path.abspath(a) for a in args]
     else:
         subs = sorted(os.path.dirname(p) for p in
-                      glob.glob(os.path.join(SUB_DIR, "*", "*", "*", "manifest.json")))
+                      glob.glob(os.path.join(SUB_DIR, "*", "*", "manifest.json")))
 
     print("=" * 70)
     print(u"Re-checking submissions: GitHub counts, not us")
@@ -359,7 +361,7 @@ def main():
     print("─" * 70)
     print(u"%d submissions · %d passed · %d rejected" % (len(subs), len(subs) - len(bad), len(bad)))
     for d in bad:
-        print(u"  🔴 %s" % os.path.relpath(d, HERE))
+        print(u"  🔴 %s" % os.path.relpath(d, ROOT))
     return 1 if bad else 0
 
 

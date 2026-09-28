@@ -739,7 +739,8 @@ def main():
         print("Calling judge %s %d times%s. Billed to the owner of OPENROUTER_API_KEY."
               % (", ".join(m for m, _ in _J.JUDGES), _n * len(_J.JUDGES),
                  "" if a.mode == "memory" else
-                 " (questions without a written answer also call the answer LLM %s)" % _J.ANSWER_MODEL))
+                 " (questions without a written answer also call the answer LLM %s, effort %s)"
+                 % (_J.ANSWER_MODEL, _J.ANSWER_EFFORT)))
         if _skip:
             print("  %d questions whose answer is 'it never came up' (%s etc.) cannot be scored in memory mode, "
                   "so they are not sent (not scorable)." % (_skip, "·".join(NO_MEMORY_AXES)))
@@ -1288,6 +1289,13 @@ def main():
         _sum["_summary"]["judge"] = {
             "models": [m for m, _ in _J.JUDGES],
             "answer_model": _J.ANSWER_MODEL if a.mode == "answer" else None,
+            "answer_effort": _J.ANSWER_EFFORT if a.mode == "answer" else None,
+            # answers the submitter wrote were not read by the official reader
+            "answers_by_official_reader": (sum(1 for x in JS.values() if "generated_answer" in x)
+                                           if a.mode == "answer" else None),
+            "answers_supplied": (sum(1 for x in JS.values()
+                                     if "answer_used" in x and "generated_answer" not in x)
+                                 if a.mode == "answer" else None),
             "judged": sum(1 for x in JS.values() if x.get("votes")),
             "failed": sum(1 for x in JS.values() if x.get("error"))}
     _sp = (a.out or a.runfile.rsplit(".", 1)[0]) + "_summary.json"
