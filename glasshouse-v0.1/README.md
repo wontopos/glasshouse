@@ -479,11 +479,11 @@ Settings: temperature 0, no partial credit. The judge sees the retrieved memorie
 question, the reference answer, and the system's answer. Reproduce with
 `python pick_judge.py --run`; the cases are built from the conversation by that file.
 
-⚠️ **The "wording the conversation used" column, 60 percent at best, does not describe the
-current question set.** Four of the accepted alternatives the judges rejected were genuinely
-too broad (Q261 accepted `noticed`, which never says what was noticed), and that was our
-fault, not the judges'. `fix_broad_alts.py` removed them, so that column would rise on a
-rerun. The judges found a real defect in our data.
+⚠️ **On answers in the wording the conversation used, the judges reached 60 percent at best,
+and that figure does not describe the current question set.** Four of the accepted alternatives
+the judges rejected were genuinely too broad (Q261 accepted `noticed`, which never says what was
+noticed), and that was our fault, not the judges'. `fix_broad_alts.py` removed them, so that
+figure would rise on a rerun. The judges found a real defect in our data.
 
 ### The answer model, and how much it compresses every score
 
@@ -957,7 +957,8 @@ questions : What was on the chair?   → a backpack
 ```
 
 None of the three answers appears in the text. We also checked the rest of each host session,
-because a filler conversation that happens to mention a cat would break a cat question.
+because a filler conversation that happens to mention a cat would break a cat question. One got
+through: the host session of I038, whose answer is a cat, mentions cats in eight other turns.
 
 ---
 
@@ -1255,12 +1256,16 @@ only, never lyrics, dialogue, or plot text.
 Service and product names were replaced with invented ones. This is not a legal precaution, it is
 a measurement one. If the answer to "which flashcard app do they use?" is a real market leader, a
 system with no memory at all can guess it from popularity and score a point. An invented name
-cannot be guessed, so a correct answer is evidence that retrieval happened. Twelve questions,
-0.9% of the set, have an invented name as their answer.
+cannot be guessed, so a correct answer is evidence that retrieval happened. Twenty-six questions,
+1.7 percent of the 1,547, have an invented name as their answer. Three answers kept a real name:
+WeWork (Q832), VTI and VOO (Q1054) and New Music Daily (Q1045). None of them was answered in
+the floor run.
 
-Titles of films, shows, books, albums, games, and podcasts were left as they are. The three
-questions whose answer is a real title all ask which of several titles named in the conversation
-the person had seen, so popularity gives no advantage there.
+Titles of films, shows, books, albums, games, and podcasts were left as they are. Seven
+questions have a real title as their answer: Q977, Q1019, Q1021, Q1025, Q1028, Q1036 and Q1149.
+Only Q1149 asks which of several titles named in the conversation the person had seen. On the
+other six, popularity can help a system that never read the conversation, although none of the
+seven was answered in the floor run.
 
 ## Credits
 
