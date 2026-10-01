@@ -185,8 +185,8 @@ with it.
   them counts as found.** Weights price **the risk of being wrong,** not retrieval, so the
   comparison never meant anything
 
-The floor and ceiling (2.4 / 83.6) do not involve weights. `floor_ceiling.py` does not use
-them, and it skips `ABSTAIN`, `FALSE_MEMORY` and `IMAGE` on purpose (their correct evidence
+The floor and ceiling (4.3 / 94.4) are plain averages; weighted, they are 7.1 / 91.6. The
+measurement skips `ABSTAIN`, `FALSE_MEMORY` and `IMAGE` on purpose (their correct evidence
 is **nothing**, so a ceiling test cannot be set up for them).
 
 ---

@@ -274,11 +274,12 @@ systems, so it should never be inferred from the file.
 ⚠️ **Until 2026-09-17, `memory` and `answer` did not run.** Both stopped immediately with a
 note that they were still to be connected, so the published scorer could not produce an
 official score at all. They are connected now, and a build check runs the whole path end to
-end with only the network call replaced by a fake. **What that check cannot show is how the
-judge model responds to these prompts, because we have not yet paid to run them.** The
-floor and ceiling figures further down were produced by a separate script with a close
-variant of the answer prompt. If you are the first to run `memory` or `answer`, run twenty
-questions first and read the verdicts saved with `--out`.
+end with only the network call replaced by a fake. **The judge has since been run in `answer`
+mode:** the floor and ceiling figures further down are 2,696 answers graded through
+`score.py --mode answer` on 2026-10-01. The answers were written by the official reader called
+directly on the Anthropic API with the settings in `judge.py`, not through the scorer's own
+OpenRouter call. `memory` mode has still not been run against the judge. If you are the first
+to run it, run twenty questions first and read the verdicts saved with `--out`.
 
 `ABSTAIN` and `FALSE_MEMORY` are not graded in `memory` mode. Their correct outcome is to
 return nothing relevant, and a list of memories cannot say "I don't know", so every system
@@ -1034,9 +1035,27 @@ Licence section, not here.
 counting. Where the model produced four candles instead of three, the answer was changed to
 match the image rather than the image regenerated.
 
-⚠️ **The floor and ceiling below were measured before the official reader was set,** with the
-answer model in use at the time, not `claude-opus-5.5`. Both depend on the reader. We will
-measure them again with the official reader and post the result by 2026-10-05.
+> **Measured again on 2026-10-01 with the official reader,** `claude-opus-5.5` at `medium`
+> effort with the answer prompt in `judge.py`, graded by the official judge through
+> `score.py --mode answer`. 1,348 questions, each asked twice: with no memory, and with the
+> evidence turns handed over with their dates and speakers. $3.97 for the reader, $1.80 for
+> the judge.
+>
+> | | 2026-09-16, earlier answer model | 2026-10-01, official reader |
+> |---|---|---|
+> | floor | 2.4% | **4.3%** |
+> | ceiling | 83.6% | **94.4%** |
+> | gap | 81.2 | **90.1** |
+> | answerable with no memory | 5 | **4** |
+>
+> The two columns differ in the reader and in the script, so the change is not one effect. The
+> floor now comes from `score.py`, which gives half credit for "I don't know" on `UPDATE`,
+> `STALE` and `CONTRADICT`. 4.0 of the 4.3 points are that credit, and four questions are
+> answered in full with no memory.
+>
+> The official reader refused 10 of the 2,696 requests on safety grounds (category `cyber`).
+> All ten are ordinary questions about the plot and the tool, such as how long a test spray
+> ran. They are scored as empty answers: 8 in the floor, 2 in the ceiling.
 
 > **These two numbers were re-measured on 2026-09-16** against the current build
 > (`floor_ceiling.py --run`, 1,348 questions, $1.61 of actual spend).
@@ -1060,28 +1079,24 @@ measure them again with the official reader and post the result by 2026-10-05.
 > text-only ceiling zero by construction. The 800 cross-language questions carry no
 > evidence turns at all and cannot be put through this test.
 
-**Floor 2.4 percent, ceiling 83.6 percent** (2026-09-16, 1,348 questions, `floor_ceiling.py`).
+**Floor 4.3 percent, ceiling 94.4 percent** (2026-10-01, 1,348 questions, official reader).
 The floor asks each question with no memory at all, the ceiling hands over the turns that hold
-the answer. The gap between them, 81.2 points, is what this benchmark can actually resolve.
+the answer. The gap between them, 90.1 points, is what this benchmark can actually resolve.
 
-**Five questions, 0.4 percent, are still answerable with no conversation at all.** Their ids
-are in `floor_hits.json`, and all five fail the same way: the answer is carried in the wording
-of the question. "Listening to nothing at the plot connects to which trait" has the gold answer
-"they like quiet". One trap question asks where a coffee that used to come *before* eating
-happens now, which leaves one obvious flip. Another asks which of three rounds came in
-smallest, where guessing wins one time in three. These are not being changed in v1: fixing
-them means re-measuring, and re-measuring on rewritten questions surfaces a different five.
+**Four questions, 0.3 percent, are still answerable with no conversation at all:** Q168, Q301,
+Q314 and Q674. All four can be reached from the wording of the question or from common sense.
+"Why not net the whole plot?" has the gold answer "it would cost too much", and "What do they
+say the best design is?" has "invisible", which is a common saying. These are not being changed
+in v1: fixing them means re-measuring, and re-measuring on rewritten questions surfaces a
+different few.
 The measurement that matters is that the count fell from 53 to 5 when the earlier batch was
 rewritten, which is the evidence that the rewrite worked.
 
-**The 16 percent the ceiling leaves on the table is mostly not the questions.** Re-answering
-the 207 failures with a stronger reader recovers 87 of them, 42 percent, which means that
-much of the ceiling is measuring the answer model rather than the benchmark. The 120 the
-stronger reader also missed are listed in `floor_ceiling_suspect.json` and need a person to
-read them. `CONTRADICT` at 3.3 percent and `CONFLICT` at 44.3 percent are not defects: those
-axes exist to catch exactly the failure the model is showing, and it shows it even when both
-conflicting values sit in front of it. The stronger reader missed 27 of 29 `CONTRADICT`
-questions too, which is the same finding measured twice.
+**The ceiling leaves 5.6 percent on the table.** `CONTRADICT` at 53.3 percent is not a defect:
+the axis exists to catch exactly the failure the reader shows. With both values in front of it,
+it stated one of them as fact on 11 of the 30. The next lowest are `MULTI` at 78.0, `IMPLICIT`
+at 84.8 and `TEMPORAL` at 87.7 percent, the axes that need a step after reading. `CONFLICT` is
+at 95.3 percent.
 
 **`evidence_turns` is exact for 1,402 questions and approximate for 96** (in `full`). Where a
 fact could not be pinned to a single turn, the whole session is listed instead. A further 49 have
