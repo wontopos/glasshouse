@@ -19,10 +19,12 @@ people's AI. There should be a standard.
 3. **An individual's proposal is added on public support.** There is no number, on
    purpose. A count passes anything with one viral post behind it and turns away a
    quiet correction that happens to be right.
-4. **The reader, the judge and the prompts are set by the version.** Each version of
-   the benchmark fixes them. A submitter does not choose them.
-5. **A submission carries its runs, its harness, and which version's reader, judge
-   and prompts it used.**
+4. **The judge and the prompts are set by the version.** Each version of the
+   benchmark fixes them. A submitter does not choose them. **The reader, the model
+   that writes the answer, is the submitter's choice** and has to be stated with the
+   result.
+5. **A submission carries its runs, its harness, which version's judge and prompts
+   it used, and which reader it used.**
 6. **The harness has to be one a customer could use**, the product's own SDK for
    instance. A number produced through a path only its author can reach is not a
    number anyone else can get.
