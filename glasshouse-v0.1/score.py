@@ -539,7 +539,7 @@ def memory_list(r):
     return []
 
 
-def judge_scores(runs, Q, mode, key, workers=8):
+def judge_scores(runs, Q, mode, key, workers=8, answer_model=None, answer_effort=None):
     u"""Score each question with the judge LLM. {question id: {score, votes, ...}}
 
     ⚠️⚠️ **Until 2026-09-17 this path did not exist.** Given `--mode memory` or `answer`,
@@ -564,7 +564,8 @@ def judge_scores(runs, Q, mode, key, workers=8):
       (`question`) is used only for writing the answer.
     · In answer mode, if the submitter wrote answers with their own answer model
       (`answer_generated: true`), those answers are judged. If not, per the README table,
-      "an LLM writes an answer from those memories": judge.ANSWER_MODEL writes it.
+      "an LLM writes an answer from those memories": the answer model writes it, which is
+      judge.ANSWER_MODEL unless `answer_model` (--answer-model) replaces it.
     · If a call still fails after retries, the question is left **not scorable, not 0,**
       and failures are counted separately. Scoring 0 would turn a network outage into a
       grade.
@@ -595,7 +596,8 @@ def judge_scores(runs, Q, mode, key, workers=8):
                 ans = r.get("answer") or ""
                 if r.get("answer_generated") is not True:
                     asked = q.get("question") or judged_q
-                    ans = J.generate_answer(asked, mems, key)
+                    ans = J.generate_answer(asked, mems, key, model=answer_model,
+                                            effort=answer_effort)
                     out["generated_answer"] = ans
                 out["answer_used"] = ans
                 s, votes = J.judge_answer(judged_q, gold, req, ans, ax, key, alts)
@@ -642,6 +644,13 @@ def main():
                     help=u"exit code 1 if non-compliant. For filtering submissions automatically")
     ap.add_argument("--workers", type=int, default=8,
                     help=u"how many judge calls run at once (memory/answer only). Default 8")
+    ap.add_argument("--answer-model", default=None,
+                    help="the model that writes the answer in --mode answer. Default: the\n"
+                         "version's own reader (judge.ANSWER_MODEL). Whatever is used is written "
+                         "into the summary file, and it can never be the judge")
+    ap.add_argument("--answer-effort", default=None, choices=["low", "medium", "high"],
+                    help="reasoning effort for --answer-model. Without --answer-model the default "
+                         "reader's own setting is used. With it, none unless you give one")
     ap.add_argument("--tier", default=None, choices=["core", "small", "medium", "full"],
                     help=u"which tier's conversation was stored. Used when scoring questions_xling.jsonl: "
                          u"evidence turns are taken from that tier's questions and the conversation file is that tier's")
@@ -730,8 +739,18 @@ def main():
               "original questions and check retrieval" % len(_need))
 
     JS = {}
+    _answer_model = _answer_effort = None
     if a.mode in ("memory", "answer"):
         import judge as _J
+        # The answer model is the submitter's choice and has to be stated (README, "Who decides").
+        # It is never the judge: a judge lenient toward its own model's output would grade itself.
+        if a.answer_model:
+            _answer_model, _answer_effort = a.answer_model, a.answer_effort
+        else:
+            _answer_model, _answer_effort = _J.ANSWER_MODEL, (a.answer_effort or _J.ANSWER_EFFORT)
+        if a.mode == "answer" and _answer_model in [m for m, _ in _J.JUDGES]:
+            ap.error("the answer model %s is also the judge. The two roles never share a model"
+                     % _answer_model)
         _todo = [r for r in runs if r.get("id") in Q]
         _skip = sum(1 for r in _todo
                     if a.mode == "memory" and is_no_memory(Q[r["id"]]))
@@ -740,11 +759,12 @@ def main():
               % (", ".join(m for m, _ in _J.JUDGES), _n * len(_J.JUDGES),
                  "" if a.mode == "memory" else
                  " (questions without a written answer also call the answer LLM %s, effort %s)"
-                 % (_J.ANSWER_MODEL, _J.ANSWER_EFFORT)))
+                 % (_answer_model, _answer_effort or "none")))
         if _skip:
             print("  %d questions whose answer is 'it never came up' (%s etc.) cannot be scored in memory mode, "
                   "so they are not sent (not scorable)." % (_skip, "·".join(NO_MEMORY_AXES)))
-        JS = judge_scores(runs, Q, a.mode, key, workers=a.workers)
+        JS = judge_scores(runs, Q, a.mode, key, workers=a.workers,
+                          answer_model=a.answer_model, answer_effort=a.answer_effort)
         _fail = [i for i, x in JS.items() if x.get("error")]
         if _fail:
             print("  🔴 %d questions where the judge call failed after retries, left not scorable: %s"
@@ -1288,11 +1308,13 @@ def main():
         import judge as _J
         _sum["_summary"]["judge"] = {
             "models": [m for m, _ in _J.JUDGES],
-            "answer_model": _J.ANSWER_MODEL if a.mode == "answer" else None,
-            "answer_effort": _J.ANSWER_EFFORT if a.mode == "answer" else None,
-            # answers the submitter wrote were not read by the official reader
-            "answers_by_official_reader": (sum(1 for x in JS.values() if "generated_answer" in x)
-                                           if a.mode == "answer" else None),
+            "answer_model": _answer_model if a.mode == "answer" else None,
+            "answer_effort": _answer_effort if a.mode == "answer" else None,
+            # False when the submitter replaced the default reader with --answer-model
+            "answer_model_is_default": (a.answer_model is None if a.mode == "answer" else None),
+            # answers the submitter supplied were not written by the answer model above
+            "answers_by_answer_model": (sum(1 for x in JS.values() if "generated_answer" in x)
+                                        if a.mode == "answer" else None),
             "answers_supplied": (sum(1 for x in JS.values()
                                      if "answer_used" in x and "generated_answer" not in x)
                                  if a.mode == "answer" else None),

@@ -276,7 +276,7 @@ note that they were still to be connected, so the published scorer could not pro
 official score at all. They are connected now, and a build check runs the whole path end to
 end with only the network call replaced by a fake. **The judge has since been run in `answer`
 mode:** the floor and ceiling figures further down are 2,696 answers graded through
-`score.py --mode answer` on 2026-10-01. The answers were written by the official reader called
+`score.py --mode answer` on 2026-10-01. The answers were written by the default reader called
 directly on the Anthropic API with the settings in `judge.py`, not through the scorer's own
 OpenRouter call. `memory` mode has still not been run against the judge. If you are the first
 to run it, run twenty questions first and read the verdicts saved with `--out`.
@@ -514,19 +514,28 @@ The other 41 percent is lost by the reader, not by the memory system. Therefore:
   · **the gaps between systems compress too.** Less room separates good memory from bad
   · **changing the answer model changes every number,** which is why the run record states it
 
-The official reader for v0.1 is `anthropic/claude-opus-5.5` at `medium` effort. It always
-thinks before answering and cannot be told not to, so the effort is part of the setting: it is
-fixed in `judge.py` and written into the run summary next to the model. It is not in the table
-above yet.
+The default reader is `anthropic/claude-opus-5.5` at `medium` effort. It always thinks before
+answering and cannot be told not to, so the effort is part of its setting: it is set in
+`judge.py` and written into the run summary next to the model. It is not in the table above
+yet.
 
-#### Who decides: the version fixes the judge and the reader
+#### Who decides: the judge is fixed, the answer model is yours
 
 | | who chooses | why |
 |---|---|---|
 | **judge** | **we fix it.** `google/gemini-3.7-flash`. Changing it requires measuring and publishing new grounds | if the instrument moves, comparing systems means nothing |
-| **reader** | **we fix it.** `anthropic/claude-opus-5.5` at `medium` effort | changing the reader changes every number |
+| **answer model** (the reader) | **you choose, and you say which.** The default is the reader above, and `--answer-model` replaces it | the number is only useful if it comes from the model you would actually deploy |
 
-A run read by another model is not a v0.1 score. Changing either one takes a new version.
+Changing the answer model changes every number, so a score is only comparable with scores that
+name the same one. The run summary records the model and its effort, and a submission has to
+state them. Results from different answer models are not merged into one comparison. The two
+roles never share a model: the scorer refuses an answer model that is also the judge.
+
+Not any model, though. An answer model can answer **without the memory at all**, and then the
+benchmark measures what that model already knew instead of what the memory returned. We do not
+publish an allowed list, because a list we picked invites the reply that we allowed only the
+models that flatter us. Column C in the table above is how often each candidate produced a value
+with no evidence for it, and a model that scores high there is not measuring the memory.
 
 ### Reproduction tolerance: not set yet
 
@@ -1036,13 +1045,13 @@ Licence section, not here.
 counting. Where the model produced four candles instead of three, the answer was changed to
 match the image rather than the image regenerated.
 
-> **Measured again on 2026-10-01 with the official reader,** `claude-opus-5.5` at `medium`
+> **Measured again on 2026-10-01 with the default reader,** `claude-opus-5.5` at `medium`
 > effort with the answer prompt in `judge.py`, graded by the official judge through
 > `score.py --mode answer`. 1,348 questions, each asked twice: with no memory, and with the
 > evidence turns handed over with their dates and speakers. $3.97 for the reader, $1.80 for
 > the judge.
 >
-> | | 2026-09-16, earlier answer model | 2026-10-01, official reader |
+> | | 2026-09-16, earlier answer model | 2026-10-01, default reader |
 > |---|---|---|
 > | floor | 2.4% | **4.3%** |
 > | ceiling | 83.6% | **94.4%** |
@@ -1054,7 +1063,7 @@ match the image rather than the image regenerated.
 > `STALE` and `CONTRADICT`. 4.0 of the 4.3 points are that credit, and four questions are
 > answered in full with no memory.
 >
-> The official reader refused 10 of the 2,696 requests on safety grounds (category `cyber`).
+> The default reader refused 10 of the 2,696 requests on safety grounds (category `cyber`).
 > All ten are ordinary questions about the plot and the tool, such as how long a test spray
 > ran. They are scored as empty answers: 8 in the floor, 2 in the ceiling.
 
@@ -1080,7 +1089,7 @@ match the image rather than the image regenerated.
 > text-only ceiling zero by construction. The 800 cross-language questions carry no
 > evidence turns at all and cannot be put through this test.
 
-**Floor 4.3 percent, ceiling 94.4 percent** (2026-10-01, 1,348 questions, official reader).
+**Floor 4.3 percent, ceiling 94.4 percent** (2026-10-01, 1,348 questions, default reader).
 The floor asks each question with no memory at all, the ceiling hands over the turns that hold
 the answer. The gap between them, 90.1 points, is what this benchmark can actually resolve.
 

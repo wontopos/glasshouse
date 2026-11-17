@@ -18,8 +18,11 @@ own directory at the root of this repository and does not change once published.
 See [schema/submission.schema.json](schema/submission.schema.json). Every field in
 `required` has to be there. The parts that matter most:
 
-- **reader**, **judge**, **prompts**: set by the version you ran. Record which
-  version, so a reader knows what produced the number. You do not choose them.
+- **judge**, **prompts**: set by the version you ran. Record which version, so a
+  reader knows what produced the number. You do not choose them.
+- **reader**: the model that writes the answer. You choose it and you name it, with
+  its settings. Changing it changes every number, so a result is only comparable
+  with results that name the same one.
 - **harness**: how the run reached the system, and it has to be a path a customer
   could use. The product's own SDK counts. A private route does not.
 - **engine**: not required. Nothing here asks how a system works.

@@ -16,7 +16,8 @@ Design decisions (things the spec has to state):
   · Two scoring modes, both using the judge.
       memory  the judge reads the retrieved memories       -> judge_memory()
       answer  the judge reads the answer an LLM wrote      -> judge_answer()
-    Answer model = claude-opus-5.5 at medium effort, the official reader for v0.1.
+    Answer model = claude-opus-5.5 at medium effort is the default reader. A submitter may
+    choose another with score.py --answer-model and has to say which. The judge is fixed.
   · temperature 0 for the judge. The answer model always thinks and takes no temperature;
     its effort is set here and written into the run summary.
 """
@@ -37,7 +38,7 @@ JUDGES = [
     ("google/gemini-3.7-flash", "Gemini 3.7 Flash"),
 ]
 JUDGE_MAX_TOKENS = 2000   # A reasoning model, so generous. Too short and the body comes back empty.
-ANSWER_MODEL = "anthropic/claude-opus-5.5"   # the official reader for v0.1
+ANSWER_MODEL = "anthropic/claude-opus-5.5"   # the default reader. score.py --answer-model replaces it
 # Thinking cannot be turned off on this model. OpenRouter defaults it to high, so the
 # effort is always sent. Thinking counts against max_tokens: too short and the body is empty.
 ANSWER_EFFORT = "medium"
@@ -281,10 +282,18 @@ def _call(model, prompt, key, max_tokens=200, retries=3, want_usage=False,
     raise RuntimeError(f"{model} call failed: {last}")
 
 
-def generate_answer(question, memories, key, want_usage=False):
+def generate_answer(question, memories, key, want_usage=False, model=None, effort=None):
+    """`model` replaces the default reader. The README lets a submitter use another reader as
+    long as the run record says which one, so the scorer has to be able to pass it.
+
+    The default reader's effort belongs to that model, so a model passed in does not inherit it.
+    A reasoning model needs its effort passed explicitly (`effort`); without it the call is made
+    at temperature 0 like the judge's."""
     mems = chr(10).join("- %s" % m for m in memories) or "(none)"
-    return _call(ANSWER_MODEL, ANSWER_PROMPT.format(mems=mems, q=question), key,
-                 max_tokens=ANSWER_MAX_TOKENS, effort=ANSWER_EFFORT, timeout=300,
+    if model is None:
+        model, effort = ANSWER_MODEL, (effort or ANSWER_EFFORT)
+    return _call(model, ANSWER_PROMPT.format(mems=mems, q=question), key,
+                 max_tokens=ANSWER_MAX_TOKENS, effort=effort, timeout=300,
                  want_usage=want_usage)
 
 

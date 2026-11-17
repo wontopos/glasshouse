@@ -87,8 +87,9 @@ A number with none of this attached cannot be checked by anyone, so it is not ac
 
 1. **which tier** you ran, and which question file
 2. **which mode** (`memory`, `answer` or `dry`)
-3. **which answer model**, if `answer_generated` is true. For a v0.1 score it is the official
-   reader (README, "Who decides")
+3. **which answer model**, if `answer_generated` is true: the scorer's default, the one you
+   passed with `--answer-model`, or the one that wrote the answers you supplied (README, "Who
+   decides"). A result that does not name it is not accepted
 4. **the retrieval budget** you used
 5. **the date** and the version of the benchmark
 
