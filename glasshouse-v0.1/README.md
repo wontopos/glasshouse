@@ -514,19 +514,22 @@ The other 41 percent is lost by the reader, not by the memory system. Therefore:
   · **the gaps between systems compress too.** Less room separates good memory from bad
   · **changing the answer model changes every number,** which is why the run record states it
 
-The official reader for v0.1 is `anthropic/claude-opus-5.5` at `medium` effort. It always
-thinks before answering and cannot be told not to, so the effort is part of the setting: it is
-fixed in `judge.py` and written into the run summary next to the model. It is not in the table
-above yet.
+The official reader for v0.1 is `anthropic/claude-opus-5.5` at `medium` effort. It is the one
+the floor and ceiling below were measured with, and the one `score.py --mode answer` uses when a
+run does not bring its own answers. It always thinks before answering and cannot be told not to,
+so the effort is part of the setting: it is fixed in `judge.py` and written into the run summary
+next to the model. It is not in the table above yet.
 
-#### Who decides: the version fixes the judge and the reader
+#### Who decides: the judge is fixed, the reader is yours
 
 | | who chooses | why |
 |---|---|---|
 | **judge** | **we fix it.** `google/gemini-3.7-flash`. Changing it requires measuring and publishing new grounds | if the instrument moves, comparing systems means nothing |
-| **reader** | **we fix it.** `anthropic/claude-opus-5.5` at `medium` effort | changing the reader changes every number |
+| **reader** (the answer model) | **you choose, and you name it.** Write the answers with your own model and set `answer_generated` to `true`, or let `score.py --mode answer` write them with the official reader | the number is only useful if it comes from the model you would actually deploy |
 
-A run read by another model is not a v0.1 score. Changing either one takes a new version.
+Changing the reader changes every number, so a score is only comparable with scores that name the
+same reader. A submission states it (SUBMITTING.md, item 3). The reader is never the judge's model,
+as above. Changing the judge takes a new version.
 
 ### Reproduction tolerance: not set yet
 
